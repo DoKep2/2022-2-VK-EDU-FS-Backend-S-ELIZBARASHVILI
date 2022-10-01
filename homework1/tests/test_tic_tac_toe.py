@@ -78,7 +78,7 @@ class TestTicTacToe(unittest.TestCase):
     @patch('builtins.print')
     def test_check_draw(self, mock_print):
         game = TicTacToeGame(Board(self.draw_board))
-        self.assertEqual(True, game.check_draw())
+        self.assertEqual(0, game.board.available_cells)
 
     @allure.epic('TicTacToe tests')
     @allure.title('Move to not empty cell')
