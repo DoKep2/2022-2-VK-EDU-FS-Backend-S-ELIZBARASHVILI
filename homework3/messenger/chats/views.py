@@ -1,24 +1,30 @@
-import json
+from rest_framework import serializers
+from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.generics import ListCreateAPIView, get_object_or_404, ListAPIView
 
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET, require_POST
-
-from . import chats, Chat
-
-
-@require_GET
-def chat_list(request):
-    return JsonResponse({'chats': chats})
+from chats.models import Chat
+from users.models import MyUser
 
 
-@require_GET
-def get_chat(request):
-    chat_name = request.GET.get('name')
-    return JsonResponse({chat_name: list(filter(lambda el: el['name'] == chat_name, chats))})
+class ChatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Chat
+        fields = ('id', 'name', 'data', 'user')
 
 
-@require_POST
-def create_chat(request):
-    body = json.loads(request.body.decode())
-    chats.append(body)
-    return JsonResponse(body)
+class ChatsView(ListAPIView):
+    serializer_class = ChatSerializer
+    queryset = Chat.objects.all()
+
+
+class SingleChatView(ListCreateAPIView):
+    serializer_class = ChatSerializer
+
+    def get_queryset(self):
+        chat = Chat.objects.filter(id=self.request.query_params.get('id'))
+        return chat
+
+    def perform_create(self, serializer):
+        serializer.is_valid(raise_exception=True)
+        user = MyUser(id=self.request.data.get('user'))
+        return serializer.save(user=user)
